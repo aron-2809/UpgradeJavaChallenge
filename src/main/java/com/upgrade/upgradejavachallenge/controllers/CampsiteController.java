@@ -1,7 +1,6 @@
 package com.upgrade.upgradejavachallenge.controllers;
 
 import com.upgrade.upgradejavachallenge.dto.AddRequestDTO;
-import com.upgrade.upgradejavachallenge.exceptions.InvalidInputException;
 import com.upgrade.upgradejavachallenge.model.User;
 import com.upgrade.upgradejavachallenge.services.ReservationService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +44,8 @@ public class CampsiteController {
 
             User user = new User(addRequestDTO.getName(), addRequestDTO.getEmail());
 
-            Optional<Long> optionalReservationId = reservationService
-                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(), user);
+            Optional<Long> optionalReservationId = Optional.ofNullable(reservationService
+                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(), user));
 
             if (optionalReservationId.isPresent()) {
                 Long reservationId = optionalReservationId.get();
