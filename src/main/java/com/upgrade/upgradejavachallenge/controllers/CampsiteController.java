@@ -1,17 +1,21 @@
 package com.upgrade.upgradejavachallenge.controllers;
 
 import com.upgrade.upgradejavachallenge.dto.AddRequestDTO;
+import com.upgrade.upgradejavachallenge.exceptions.InvalidInputException;
 import com.upgrade.upgradejavachallenge.model.User;
 import com.upgrade.upgradejavachallenge.services.ReservationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @RestController
 @RequestMapping("/campsite")
 public class CampsiteController {
@@ -22,24 +26,68 @@ public class CampsiteController {
         this.reservationService = reservationService;
     }
 
-    @GetMapping("/availabilty")
-    public List<Date> getAvailability(Date startDate, Date endDate) {
-        return reservationService.getAvailability(startDate, endDate);
+    @GetMapping("/availability")
+    public ResponseEntity findAvalability(@RequestParam LocalDate startDate,
+                                          @RequestParam LocalDate endDate) {
+
+        List<LocalDateTime> availableDates = reservationService.findAvailability(startDate, endDate);
+
+        log.info("Available dates: " + availableDates);
+
+        return new ResponseEntity(availableDates, HttpStatus.OK);
     }
 
     @PostMapping("/reserve")
     public ResponseEntity makeReservation(@RequestBody AddRequestDTO addRequestDTO) {
+        if (addRequestDTO.getName() != null && addRequestDTO.getEmail() != null
+                && addRequestDTO.getArrivalDate() != null
+                && addRequestDTO.getDepartureDate() != null) {
 
-        User user = new User(addRequestDTO.getFullName(), addRequestDTO.getEmail());
+            User user = new User(addRequestDTO.getName(), addRequestDTO.getEmail());
 
-        Optional<Long> optionalReservationId = reservationService.
-                reserve(addRequestDTO.getDateRange(), user);
+            Optional<Long> optionalReservationId = reservationService
+                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(), user);
 
-        if (optionalReservationId.isPresent())
-            return new ResponseEntity(optionalReservationId.get(), HttpStatus.CREATED);
-        else
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+            if (optionalReservationId.isPresent()) {
+                Long reservationId = optionalReservationId.get();
 
+                log.info(String.format("%s %d", "Reservation created with booking id:", reservationId));
+
+                return new ResponseEntity(reservationId, HttpStatus.CREATED);
+            }
+        }
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+
+    @DeleteMapping("/remove")
+    public ResponseEntity removeReservation(@RequestParam Long id) {
+        if (id != null) {
+            reservationService.remove(id);
+
+            log.info(String.format("%s %d %s", "Reservation with id", id, "removed."));
+
+            return new ResponseEntity(id, HttpStatus.OK);
+        }
+
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+
+    @PutMapping("/modify")
+    public ResponseEntity modifyReservation(@RequestParam Long id,
+                                            @RequestParam LocalDate arrivalDate,
+                                            @RequestParam LocalDate departureDate) {
+
+        if (id != null && arrivalDate != null && departureDate != null
+                && arrivalDate.isBefore(departureDate)) {
+            if (reservationService.update(id, arrivalDate, departureDate)) {
+                log.info(String.format("%s %d %s", "Reservation with id", id, "modified."));
+
+                return new ResponseEntity(HttpStatus.NO_CONTENT);
+            } else {
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            }
+        }
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
 }

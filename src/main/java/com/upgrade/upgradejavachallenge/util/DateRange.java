@@ -1,46 +1,37 @@
 package com.upgrade.upgradejavachallenge.util;
 
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-@Getter
-@Setter
-public class DateRange implements Iterable<LocalDate> {
-    private LocalDate startDate;
-    private LocalDate endDate;
+public class DateRange implements Iterable<LocalDateTime> {
 
-    public DateRange(LocalDate startDate, LocalDate endDate) {
-        if (startDate != null && endDate != null && startDate.isBefore(endDate)) {
-            this.startDate = startDate;
-            this.endDate = endDate;
-        }
+    private final LocalDateTime firstDate;
+    private final LocalDateTime lastDate;
+
+    public DateRange(LocalDateTime firstDate, LocalDateTime lastDate) {
+        this.firstDate = firstDate;
+        this.lastDate = lastDate;
     }
 
     @Override
-    public Iterator<LocalDate> iterator() {
+    public Iterator<LocalDateTime> iterator() {
         return stream().iterator();
     }
 
-    public Stream<LocalDate> stream() {
-        return Stream.iterate(startDate, date -> date.plusDays(1))
-                .limit(ChronoUnit.DAYS.between(startDate, endDate) + 1);
+    public Stream<LocalDateTime> stream() {
+        return Stream.iterate(firstDate, d -> d.plusDays(1))
+                .limit(ChronoUnit.DAYS.between(firstDate, lastDate) + 1);
     }
 
-    public List<LocalDate> toList() {
-        List<LocalDate> dates = new ArrayList<>();
-
-        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            dates.add(date);
+    public List<LocalDateTime> toList() {
+        List<LocalDateTime> dates = new ArrayList<>();
+        for (LocalDateTime d = firstDate; !d.isAfter(lastDate); d = d.plusDays(1)) {
+            dates.add(d);
         }
-
         return dates;
     }
-
 }

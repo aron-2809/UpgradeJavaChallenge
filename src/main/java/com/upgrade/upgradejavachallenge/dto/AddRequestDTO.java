@@ -1,13 +1,15 @@
 package com.upgrade.upgradejavachallenge.dto;
 
-import com.upgrade.upgradejavachallenge.util.DateRange;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
 
 @Getter
 @Setter
 public class AddRequestDTO {
-    private String fullName;
+    private String name;
     private String email;
-    private DateRange dateRange;
+    private LocalDate arrivalDate;
+    private LocalDate departureDate;
 }

@@ -1,52 +1,40 @@
 package com.upgrade.upgradejavachallenge.services;
 
-import com.upgrade.upgradejavachallenge.model.Reservation;
+import com.upgrade.upgradejavachallenge.component.BookingComponent;
 import com.upgrade.upgradejavachallenge.model.User;
-import com.upgrade.upgradejavachallenge.repository.ReservationRepository;
-import com.upgrade.upgradejavachallenge.repository.UserRepository;
-import com.upgrade.upgradejavachallenge.util.DateRange;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import javax.transaction.Transactional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class ReservationService {
-
-    private ReservationRepository reservationRepository;
-
-    private UserRepository userRepository;
+    private BookingComponent bookingComponent;
 
     @Autowired
-    public ReservationService(ReservationRepository reservationRepository, UserRepository userRepository) {
-        this.reservationRepository = reservationRepository;
-        this.userRepository = userRepository;
+    public ReservationService(BookingComponent bookingComponent) {
+        this.bookingComponent = bookingComponent;
     }
 
-    public List<Date> getAvailability(Date startDate, Date endDate) {
-        List<Reservation> reservations = reservationRepository.findAll();
-
-//        return reservations.stream()
-//                .filter(reservation -> {
-//                    reservation.getStartDate().isAfter(startDate)) &&
-//                    reservation.getEndDate().isBefore(endDate)
-//                })
-//                .collect(Collectors.toList());
-
-        return null;
+    public List<LocalDateTime> findAvailability(LocalDate startDate, LocalDate endDate) {
+        return bookingComponent.findAvailability(startDate, endDate);
     }
 
-    public Optional<Long> reserve(DateRange dateRange, User user) {
-        //TODO: Logic to validate reservation can be made or not
-
-        Reservation reservation = reservationRepository.save(
-                new Reservation(dateRange.getStartDate(), dateRange.getEndDate(), user)
-        );
-
-        return Optional.ofNullable(reservation.getReservationId());
+    public Optional<Long> reserve(LocalDate fromDate, LocalDate toDate, User user) {
+        return Optional.ofNullable(bookingComponent.performBooking(fromDate, toDate, user));
     }
 
+    public void remove(Long id) {
+        bookingComponent.removeBooking(id);
+    }
 
+    public Boolean update(Long id, LocalDate fromDate, LocalDate toDate) {
+        return bookingComponent.updateBooking(id, fromDate, toDate);
+    }
 }
+

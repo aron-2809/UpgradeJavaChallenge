@@ -1,28 +1,27 @@
 package com.upgrade.upgradejavachallenge.model;
 
-import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Data
-@NoArgsConstructor(access = AccessLevel.PRIVATE, force = true)
+@NoArgsConstructor
 @EqualsAndHashCode
-@Entity
+@Entity(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id", updatable = false, nullable = false)
     private Long userId;
-    private String fullName;
+    @Column(name = "name", nullable = false)
+    private String name;
+    @Column(name = "email", unique = true)
     private String email;
 
-    public User(String fullName, String email) {
-        this.fullName = fullName;
+    public User(String name, String email) {
+        this.name = name;
         this.email = email;
     }
 }
