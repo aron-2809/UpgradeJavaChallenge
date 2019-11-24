@@ -12,13 +12,13 @@ import org.mockito.Mockito;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
+import static com.upgrade.upgradejavachallenge.util.TestsUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -33,38 +33,30 @@ class ReservationServiceTest {
     @BeforeEach
     public void setUp() {
         serviceUnderTest = new ReservationService(mockBookingComponent);
-        ReflectionTestUtils.setField(serviceUnderTest, "bookingMaxLimit", 1);
-        ReflectionTestUtils.setField(serviceUnderTest, "bookingMinLimit", 1);
-        ReflectionTestUtils.setField(serviceUnderTest, "reservationLimit", 3);
+        ReflectionTestUtils.setField(serviceUnderTest, "bookingMaxLimitMonth", 1);
+        ReflectionTestUtils.setField(serviceUnderTest, "bookingMinLimitDays", 1);
+        ReflectionTestUtils.setField(serviceUnderTest, "reservationLimitDays", 3);
     }
 
     @Test
     public void whenFindAvailabilityIsInvokedWithProperDatesResultDoesNotIncludeReservedDates() {
-        LocalDate startDate = LocalDate.of(2019, 12, 01);
-        LocalDate endDate = LocalDate.of(2019, 12, 15);
-
-        LocalDateTime localDateTime1 = LocalDateTime.of(LocalDate.of(2019, 12, 10),
-                LocalTime.of(12, 00, 00));
-        LocalDateTime localDateTime2 = LocalDateTime.of(LocalDate.of(2019, 12, 13),
-                LocalTime.of(12, 00, 00));
         User user = new User("dummy", "dummy@fakeemail.com");
 
         List<Reservation> dummyReservations = Arrays.asList(
-                new Reservation(localDateTime1, localDateTime2, user));
+                new Reservation(dateTime10, dateTime13, user));
 
-        List<LocalDateTime> expectedAvailabilityValues = new DateRange(startDate.atTime(12, 00),
-                endDate.atTime(12, 00)).toList();
+        List<LocalDateTime> expectedAvailabilityValues = new DateRange(dateTime1, dateTime15).toList();
 
-        expectedAvailabilityValues.removeAll(new DateRange(localDateTime1, localDateTime2).toList());
+        expectedAvailabilityValues.removeAll(new DateRange(dateTime10, dateTime13).toList());
         when(mockBookingComponent.getAllReservations()).thenReturn(dummyReservations);
 
 
-        List<LocalDateTime> actualAvailabilityValues = serviceUnderTest.findAvailability(startDate, endDate);
+        List<LocalDateTime> actualAvailabilityValues =
+                serviceUnderTest.findAvailability(dateTime1.toLocalDate(), dateTime15.toLocalDate());
 
 
         verify(mockBookingComponent, times(1)).getAllReservations();
         assertTrue(actualAvailabilityValues.equals(expectedAvailabilityValues));
-
     }
 
     @Test
@@ -77,34 +69,30 @@ class ReservationServiceTest {
 
     @Test
     public void whenFindAvailabilityIsInvokedWithMoreThanOneMonthDateRangeThenAvailabilityDatesAreInAMonthRange() {
-        LocalDate startDate = LocalDate.of(2019, 12, 01);
-        LocalDate endDate = LocalDate.of(2020, 01, 30);
-
         when(mockBookingComponent.getAllReservations()).thenReturn(new ArrayList<>());
 
-        List<LocalDateTime> expectedAvailabilityValues = new DateRange(startDate.atTime(12, 00),
-                LocalDate.of(2020, 01, 01).atTime(12, 00)).toList();
+        List<LocalDateTime> expectedAvailabilityValues = new DateRange(dateTime1,
+                newDateTime1).toList();
 
 
-        List<LocalDateTime> result = serviceUnderTest.findAvailability(startDate, endDate);
+        List<LocalDateTime> actualAvailabilityValues = serviceUnderTest.findAvailability(dateTime1.toLocalDate(),
+                newDateTime2.toLocalDate());
 
 
         verify(mockBookingComponent, times(1)).getAllReservations();
-        Assert.assertTrue(expectedAvailabilityValues.equals(result));
+        Assert.assertTrue(expectedAvailabilityValues.equals(actualAvailabilityValues));
     }
 
     @Test
     public void whenUpdateBookingIsCalledWithProperDatesThenCorrectReservationIsUpdated() {
-        LocalDateTime startDate = LocalDate.of(2019, 12, 01).atTime(12, 00);
-        LocalDateTime endDate = LocalDate.of(2020, 12, 05).atTime(12, 00);
-        Reservation dummyReservation = new Reservation(startDate,
-                endDate, new User("John Smith", "John.Smith@email.com"));
+        Reservation dummyReservation = new Reservation(dateTime1,
+                dateTime3, new User("John Smith", "John.Smith@email.com"));
         dummyReservation.setReservationId(1L);
         when(mockBookingComponent.findReservation(1L)).thenReturn(java.util.Optional.of(dummyReservation));
         when(mockBookingComponent.recordBooking(dummyReservation)).thenReturn(dummyReservation);
 
 
-        Boolean result = serviceUnderTest.update(1L, startDate.toLocalDate(), endDate.toLocalDate());
+        Boolean result = serviceUnderTest.update(1L, dateTime1.toLocalDate(), dateTime3.toLocalDate());
 
 
         verify(mockBookingComponent, times(1))
@@ -113,12 +101,32 @@ class ReservationServiceTest {
     }
 
     @Test
+    public void whenUpdateBookingIsCalledWithOutOfRangeDatesThenReservationIsUpdatedBasedOnReservationLimit() {
+        final Long reservationId = 77L;
+        final String userName = getUUID();
+        final String userEmail = getUUID();
+        final User usr = new User(userName, userEmail);
+        usr.setUserId(7L);
+        Reservation updateReservation = new Reservation(dateTime7, newDateTime1, usr);
+
+        when(mockBookingComponent.recordBooking(updateReservation)).thenReturn(updateReservation);
+        when(mockBookingComponent.findReservation(reservationId)).thenReturn(Optional.of(updateReservation));
+
+        Boolean result = serviceUnderTest.update(reservationId, dateTime7.toLocalDate(),
+                newDateTime1.toLocalDate());
+
+
+        verify(mockBookingComponent, times(1))
+                .recordBooking(updateReservation);
+        assertTrue(result);
+    }
+
+
+    @Test
     public void whenUpdateBookingIsCalledWithInvalidDataThenFalseIsReturned() {
-        LocalDateTime startDate = LocalDate.of(2019, 12, 01).atTime(12, 00);
-        LocalDateTime endDate = LocalDate.of(2020, 12, 05).atTime(12, 00);
         when(mockBookingComponent.findReservation(1L)).thenReturn(null);
 
-        Boolean result = serviceUnderTest.update(100L, startDate.toLocalDate(), endDate.toLocalDate());
+        Boolean result = serviceUnderTest.update(100L, dateTime1.toLocalDate(), dateTime5.toLocalDate());
 
         assertFalse(result);
     }
@@ -133,21 +141,18 @@ class ReservationServiceTest {
 
     @Test
     public void whenRecordBookingIsCalledWithCorrectValuesThenRecordIsPersisted() {
-        LocalDateTime startDate = LocalDate.of(2019, 12, 01).atTime(12, 00);
-        LocalDateTime endDate = LocalDate.of(2020, 12, 05).atTime(12, 00);
-        String userName = "Donald Duck";
-        String userEmail = "donald.duck@gmail.com";
+        final String userName = "Donald Duck";
+        final String userEmail = "donald.duck@gmail.com";
 
-        Reservation dummyReservation = new Reservation(startDate, endDate, new User(userEmail, userEmail));
+        Reservation dummyReservation = new Reservation(dateTime2, dateTime6, new User(userEmail, userEmail));
         dummyReservation.setReservationId(1L);
         when(mockBookingComponent.getAllReservations()).thenReturn(new ArrayList<>());
-        when(mockBookingComponent.recordBooking(startDate, endDate, userName, userEmail))
+        when(mockBookingComponent.recordBooking(dateTime2, dateTime6, userName, userEmail))
                 .thenReturn(dummyReservation);
 
         Long result = serviceUnderTest
-                .reserve(startDate.toLocalDate(), endDate.toLocalDate(), "Donald duck", "donald.duck@mail.com");
+                .reserve(dateTime2.toLocalDate(), dateTime6.toLocalDate(), userName, userEmail);
 
         assertTrue(result.equals(1L));
-
     }
 }

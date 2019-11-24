@@ -1,21 +1,18 @@
 package com.upgrade.upgradejavachallenge.model;
 
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor(access = AccessLevel.PRIVATE, force = true)
+@Getter
+@Setter
 @EqualsAndHashCode
 @Entity(name = "reservations")
-public class Reservation extends AuditModel {
+public class Reservation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
@@ -27,9 +24,8 @@ public class Reservation extends AuditModel {
     @Column(name = "end_date", nullable = false)
     private LocalDateTime endDate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private User user;
 
