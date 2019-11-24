@@ -1,7 +1,7 @@
 package com.upgrade.upgradejavachallenge.controllers;
 
 import com.upgrade.upgradejavachallenge.dto.AddRequestDTO;
-import com.upgrade.upgradejavachallenge.model.User;
+import com.upgrade.upgradejavachallenge.model.Reservation;
 import com.upgrade.upgradejavachallenge.services.ReservationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,16 +36,31 @@ public class CampsiteController {
         return new ResponseEntity(availableDates, HttpStatus.OK);
     }
 
+    @GetMapping("/find")
+    public ResponseEntity checkReservation(@RequestParam Long id) {
+        if (id != null) {
+            Optional<Reservation> optionalReservation = reservationService.find(id);
+
+            if (optionalReservation.isPresent()) {
+                return new ResponseEntity(optionalReservation.get(), HttpStatus.OK);
+            }
+
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+
     @PostMapping("/reserve")
     public ResponseEntity makeReservation(@RequestBody AddRequestDTO addRequestDTO) {
         if (addRequestDTO.getName() != null && addRequestDTO.getEmail() != null
                 && addRequestDTO.getArrivalDate() != null
                 && addRequestDTO.getDepartureDate() != null) {
 
-            User user = new User(addRequestDTO.getName(), addRequestDTO.getEmail());
 
             Optional<Long> optionalReservationId = Optional.ofNullable(reservationService
-                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(), user));
+                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(), addRequestDTO.getName(),
+                            addRequestDTO.getEmail()));
 
             if (optionalReservationId.isPresent()) {
                 Long reservationId = optionalReservationId.get();

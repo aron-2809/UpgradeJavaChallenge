@@ -127,7 +127,27 @@ class ReservationServiceTest {
     public void whenPerformBookingIsCalledWithNullValuesThenExceptionIsThrown() {
         assertThrows(NullPointerException.class,
                 () -> {
-                    serviceUnderTest.reserve(null, null, null);
+                    serviceUnderTest.reserve(null, null, null, null);
                 });
+    }
+
+    @Test
+    public void whenRecordBookingIsCalledWithCorrectValuesThenRecordIsPersisted() {
+        LocalDateTime startDate = LocalDate.of(2019, 12, 01).atTime(12, 00);
+        LocalDateTime endDate = LocalDate.of(2020, 12, 05).atTime(12, 00);
+        String userName = "Donald Duck";
+        String userEmail = "donald.duck@gmail.com";
+
+        Reservation dummyReservation = new Reservation(startDate, endDate, new User(userEmail, userEmail));
+        dummyReservation.setReservationId(1L);
+        when(mockBookingComponent.getAllReservations()).thenReturn(new ArrayList<>());
+        when(mockBookingComponent.recordBooking(startDate, endDate, userName, userEmail))
+                .thenReturn(dummyReservation);
+
+        Long result = serviceUnderTest
+                .reserve(startDate.toLocalDate(), endDate.toLocalDate(), "Donald duck", "donald.duck@mail.com");
+
+        assertTrue(result.equals(1L));
+
     }
 }

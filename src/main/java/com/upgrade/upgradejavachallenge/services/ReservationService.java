@@ -2,7 +2,6 @@ package com.upgrade.upgradejavachallenge.services;
 
 import com.upgrade.upgradejavachallenge.component.BookingComponent;
 import com.upgrade.upgradejavachallenge.model.Reservation;
-import com.upgrade.upgradejavachallenge.model.User;
 import com.upgrade.upgradejavachallenge.util.DateRange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -25,10 +27,24 @@ public class ReservationService {
 
     @Value("${campsite.advanced-booking.max-limit-months}")
     private Integer bookingMaxLimit;
+
     @Value("${campsite.advanced-booking.min-limit-days}")
     private Integer bookingMinLimit;
+
     @Value("${campsite.booking.reservation-limit-days}")
     private Integer reservationLimit;
+
+    private final BiPredicate<LocalDateTime, LocalDateTime> reservationLimitPredicate
+            = (localDate1, localDate2) -> localDate1.plusDays(reservationLimit).isAfter(localDate2);
+
+    private final BiPredicate<LocalDateTime, LocalDateTime> maxBookingPredicate
+            = (localDate1, localDate2) -> localDate1.plusMonths(bookingMaxLimit).isBefore(localDate2);
+
+    private final Predicate<LocalDateTime> advBookingMaxPredicate
+            =  localDateTime1 -> localDateTime1.minusMonths(bookingMaxLimit).isBefore(LocalDateTime.now());
+
+    private final Predicate<LocalDateTime> advBookingMinPredicate
+            = localDateTime1 -> localDateTime1.minusDays(bookingMinLimit).isAfter(LocalDateTime.now());
 
     @Autowired
     public ReservationService(BookingComponent bookingComponent) {
@@ -39,7 +55,7 @@ public class ReservationService {
         LocalDateTime dateTime1 = startDate.atTime(12, 00);
         LocalDateTime dateTime2 = endDate.atTime(12, 00);
 
-        dateTime2 = dateTime1.plusMonths(bookingMaxLimit).isBefore(dateTime2) ?
+        dateTime2 = maxBookingPredicate.test(dateTime1, dateTime2) ?
                 dateTime1.plusMonths(bookingMaxLimit) : dateTime2;
 
         List<Reservation> reservationList = bookingComponent.getAllReservations();
@@ -65,29 +81,34 @@ public class ReservationService {
     }
 
     private Boolean advancedBookingValidations(LocalDateTime date1) {
-        return date1.minusMonths(bookingMaxLimit).isBefore(LocalDateTime.now()) &&
-                date1.minusDays(bookingMinLimit).isAfter(LocalDateTime.now());
+        return advBookingMaxPredicate.test(date1) && advBookingMinPredicate.test(date1);
     }
 
-    public Long reserve(LocalDate startDate, LocalDate endDate, User user) {
+    public Optional<Reservation> find(Long id) {
+        return bookingComponent.findReservation(id);
+    }
+
+    public Long reserve(LocalDate startDate, LocalDate endDate, String name, String email) {
         LocalDateTime dateTime1 = startDate.atTime(12, 00);
         LocalDateTime dateTime2 = endDate.atTime(12, 00);
 
-        List<User> existingUsers = bookingComponent.findAllUsers();
-
-        if (!existingUsers.isEmpty()) {
-            Optional<User> optionalUser = existingUsers.stream()
-                    .filter(usr -> usr.getEmail().equals(user.getEmail()))
-                    .findFirst();
-
-            if (optionalUser.isPresent()) {
-                user.setUserId(optionalUser.get().getUserId());
-            }
-        }
+//        Boolean userExists = false;
+//
+//        List<User> existingUsers = bookingComponent.findAllUsers();
+//
+//        if (!existingUsers.isEmpty()) {
+//            Optional<User> optionalUser = existingUsers.stream()
+//                    .filter(usr -> usr.getEmail().equals(email))
+//                    .findFirst();
+//
+//            if (optionalUser.isPresent()) {
+//                userExists = true; //TODO: Update user bidirectional mapping
+//            }
+//        }
 
         if (advancedBookingValidations(dateTime1)) {
 
-            if (dateTime1.plusDays(reservationLimit).isBefore(dateTime2)) {
+            if (!reservationLimitPredicate.test(dateTime1, dateTime2)) {
                 dateTime2 = dateTime1.plusDays(reservationLimit);
             }
 
@@ -95,8 +116,7 @@ public class ReservationService {
                     dateTime2.toLocalDate());
 
             if (availableDates.containsAll(new DateRange(dateTime1, dateTime2).toList())) {
-                Reservation reservation = bookingComponent.recordBooking(
-                        new Reservation(dateTime1, dateTime2, user));
+                Reservation reservation = bookingComponent.recordBooking(dateTime1, dateTime2, name, email);
 
                 log.info(String.format("%s %s - %s", "Reservation created for dates:",
                         dateTime1.toString(), dateTime2.toString()));
@@ -127,10 +147,17 @@ public class ReservationService {
         Optional<Reservation> optionalReservation = bookingComponent.findReservation(id);
 
         if (optionalReservation.isPresent()) {
+            LocalDateTime localDateTime1 = startDate.atTime(12, 00);
+            LocalDateTime localDateTime2 = endDate.atTime(12, 00);
+
             Reservation reservation = optionalReservation.get();
             reservation.setReservationId(id);
-            reservation.setStartDate(startDate.atTime(12, 00));
-            reservation.setEndDate(endDate.atTime(12, 00));
+
+            localDateTime2 = reservationLimitPredicate.test(localDateTime1, localDateTime2) ?
+                    localDateTime2 : localDateTime1.plusDays(bookingMaxLimit);
+
+            reservation.setStartDate(localDateTime1);
+            reservation.setEndDate(localDateTime2);
 
             bookingComponent.recordBooking(reservation);
             return true;

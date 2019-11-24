@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,10 @@ public class BookingComponent {
 
     public void removeBooking(Long id) {
         reservationRepository.deleteById(id);
+    }
+
+    public Reservation recordBooking(LocalDateTime startDate, LocalDateTime endDate, String name, String email) {
+        return reservationRepository.save(new Reservation(startDate, endDate, new User(name, email)));
     }
 
     public Reservation recordBooking(Reservation reservation) {
