@@ -1,6 +1,8 @@
 package com.upgrade.upgradejavachallenge.controllers;
 
 import com.upgrade.upgradejavachallenge.dto.AddRequestDTO;
+import com.upgrade.upgradejavachallenge.exceptions.InvalidInputException;
+import com.upgrade.upgradejavachallenge.exceptions.RecordNotFoundException;
 import com.upgrade.upgradejavachallenge.model.Reservation;
 import com.upgrade.upgradejavachallenge.services.ReservationService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +18,7 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping("/campsite")
+@RequestMapping("/api/campsite")
 public class CampsiteController {
     private ReservationService reservationService;
 
@@ -45,7 +47,7 @@ public class CampsiteController {
                 return new ResponseEntity(optionalReservation.get(), HttpStatus.OK);
             }
 
-            return new ResponseEntity(HttpStatus.NOT_FOUND);
+            throw new RecordNotFoundException("Invalid reservation id" + id);
         }
 
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -68,6 +70,8 @@ public class CampsiteController {
                 log.info(String.format("%s %d", "Reservation created with booking id:", reservationId));
 
                 return new ResponseEntity(reservationId, HttpStatus.CREATED);
+            } else {
+                throw new InvalidInputException("Invalid input values.");
             }
         }
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
@@ -83,7 +87,7 @@ public class CampsiteController {
             return new ResponseEntity(id, HttpStatus.OK);
         }
 
-        return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        throw new RecordNotFoundException("Invalid Input values.");
     }
 
     @PutMapping("/modify")

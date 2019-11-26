@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @WebMvcTest(CampsiteController.class)
 @ContextConfiguration(classes = {UpgradeJavaChallengeApplication.class})
-public class CampsiteIntegrationTest {
+public class CampsiteControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -87,7 +87,7 @@ public class CampsiteIntegrationTest {
     }
 
     @Test
-    public void reserveTestNegativeScenatio(){
+    public void reserveTestNegativeScenatio() {
         try {
             mockMvc.perform(post("/campsite/reserve")
                     .contentType(MediaType.APPLICATION_JSON))

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.*;
 
 import static com.upgrade.upgradejavachallenge.util.TestsUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,6 +37,32 @@ class ReservationServiceTest {
         ReflectionTestUtils.setField(serviceUnderTest, "bookingMaxLimitMonth", 1);
         ReflectionTestUtils.setField(serviceUnderTest, "bookingMinLimitDays", 1);
         ReflectionTestUtils.setField(serviceUnderTest, "reservationLimitDays", 3);
+    }
+
+    @Test
+    public void concurrentFindAvailabilityTest() {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+
+        Callable<List<LocalDateTime>> callable1 = () -> {
+            return serviceUnderTest.findAvailability(dateTime1.toLocalDate(), dateTime6.toLocalDate());
+        };
+
+        Callable<List<LocalDateTime>> callable2 = () -> {
+            return serviceUnderTest.findAvailability(dateTime1.toLocalDate(), dateTime6.toLocalDate());
+        };
+
+
+        Future<List<LocalDateTime>> future1 = es.submit(callable1);
+        Future<List<LocalDateTime>> future2 = es.submit(callable2);
+
+        try {
+            assertTrue(future1.get().equals(future2.get()));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        es.shutdown();
     }
 
     @Test
