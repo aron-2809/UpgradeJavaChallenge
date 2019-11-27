@@ -101,7 +101,7 @@ public class CampsiteController {
 
                 return new ResponseEntity(HttpStatus.NO_CONTENT);
             } else {
-                return new ResponseEntity(HttpStatus.NOT_FOUND);
+                return new ResponseEntity(HttpStatus.BAD_REQUEST);
             }
         }
         return new ResponseEntity(HttpStatus.BAD_REQUEST);

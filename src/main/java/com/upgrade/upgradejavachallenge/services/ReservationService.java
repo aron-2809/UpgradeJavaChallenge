@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.logging.*;
 
 @Service
 @Transactional
@@ -131,23 +131,36 @@ public class ReservationService {
     }
 
     public Boolean update(Long id, LocalDate startDate, LocalDate endDate) {
-        Optional<Reservation> optionalReservation = bookingComponent.findReservation(id);
+        LocalDateTime dateTime1 = startDate.atTime(12, 00);
+        LocalDateTime dateTime2 = endDate.atTime(12, 00);
 
-        if (optionalReservation.isPresent()) {
-            LocalDateTime localDateTime1 = startDate.atTime(12, 00);
-            LocalDateTime localDateTime2 = endDate.atTime(12, 00);
+        if (advancedBookingValidations(dateTime1)) {
 
-            Reservation reservation = optionalReservation.get();
-            reservation.setReservationId(id);
+            if (!reservationLimitPredicate.test(dateTime1, dateTime2)) {
+                dateTime2 = dateTime1.plusDays(reservationLimitDays);
+            }
 
-            localDateTime2 = reservationLimitPredicate.test(localDateTime1, localDateTime2) ?
-                    localDateTime2 : localDateTime1.plusDays(reservationLimitDays);
+            List<LocalDateTime> availableDates = findAvailability(dateTime1.toLocalDate(),
+                    dateTime2.toLocalDate());
 
-            reservation.setStartDate(localDateTime1);
-            reservation.setEndDate(localDateTime2);
+            if (availableDates.containsAll(new DateRange(dateTime1, dateTime2).toList())) {
+                Optional<Reservation> optionalReservation = bookingComponent.findReservation(id);
 
-            bookingComponent.recordBooking(reservation);
-            return true;
+                if (optionalReservation.isPresent()) {
+                    Reservation reservation = optionalReservation.get();
+                    reservation.setReservationId(id);
+
+                    dateTime2 = reservationLimitPredicate.test(dateTime1, dateTime2) ?
+                            dateTime2 : dateTime1.plusDays(reservationLimitDays);
+
+                    reservation.setStartDate(dateTime1);
+                    reservation.setEndDate(dateTime2);
+
+                    bookingComponent.recordBooking(reservation);
+                    return true;
+                }
+                return false;
+            }
         }
         return false;
     }
