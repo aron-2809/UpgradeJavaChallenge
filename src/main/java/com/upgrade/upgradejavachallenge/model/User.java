@@ -1,5 +1,7 @@
 package com.upgrade.upgradejavachallenge.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import javax.validation.constraints.Email;
 import java.util.HashSet;
@@ -18,8 +20,12 @@ public class User {
     @Email
     private String email;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Reservation> reservations = new HashSet<>();
+
+    public User() {
+    }
 
     public User(String name, String email) {
         this.name = name;
