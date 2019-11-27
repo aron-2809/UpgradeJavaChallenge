@@ -1,10 +1,8 @@
 package com.upgrade.upgradejavachallenge.services;
 
 import com.upgrade.upgradejavachallenge.component.BookingComponent;
-import com.upgrade.upgradejavachallenge.exceptions.RecordNotFoundException;
 import com.upgrade.upgradejavachallenge.model.Reservation;
 import com.upgrade.upgradejavachallenge.util.DateRange;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,9 +16,8 @@ import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.logging.*;
 
-
-@Slf4j
 @Service
 @Transactional
 public class ReservationService {
@@ -46,6 +43,9 @@ public class ReservationService {
 
     private final Predicate<LocalDateTime> minAdvancedBookingPredicate
             = localDateTime1 -> localDateTime1.minusDays(bookingMinLimitDays).isAfter(LocalDateTime.now());
+
+    private static final Logger log =
+            Logger.getLogger(ReservationService.class.getName());
 
     @Autowired
     public ReservationService(BookingComponent bookingComponent) {

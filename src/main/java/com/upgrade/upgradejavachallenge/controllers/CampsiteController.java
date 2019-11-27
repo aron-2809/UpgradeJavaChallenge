@@ -5,7 +5,7 @@ import com.upgrade.upgradejavachallenge.exceptions.InvalidInputException;
 import com.upgrade.upgradejavachallenge.exceptions.RecordNotFoundException;
 import com.upgrade.upgradejavachallenge.model.Reservation;
 import com.upgrade.upgradejavachallenge.services.ReservationService;
-import lombok.extern.slf4j.Slf4j;
+import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +16,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/campsite")
 public class CampsiteController {
     private ReservationService reservationService;
+
+    private static final Logger log = Logger.getLogger(CampsiteController.class.getName());
 
     @Autowired
     public CampsiteController(ReservationService reservationService) {

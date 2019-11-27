@@ -4,7 +4,6 @@ import com.upgrade.upgradejavachallenge.model.Reservation;
 import com.upgrade.upgradejavachallenge.model.User;
 import com.upgrade.upgradejavachallenge.repository.ReservationRepository;
 import com.upgrade.upgradejavachallenge.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @Component
 public class BookingComponent {
     private ReservationRepository reservationRepository;
