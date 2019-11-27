@@ -35,7 +35,7 @@ public class CampsiteControllerTest {
     @Test
     public void getAvailabilityTest() {
         try {
-            mockMvc.perform(get("/campsite/availability")
+            mockMvc.perform(get("/api/campsite/availability")
                     .param("startDate", LocalDate.of(2019, 12, 01).toString())
                     .param("endDate", LocalDate.of(2019, 12, 15).toString()))
                     .andExpect(status().isOk());
@@ -57,7 +57,7 @@ public class CampsiteControllerTest {
         when(mockReservationService.find(1L)).thenReturn(expectedReservation);
 
         try {
-            mockMvc.perform(get("/campsite/find")
+            mockMvc.perform(get("/api/campsite/find")
                     .param("id", new Long(1).toString()))
                     .andExpect(status().isOk());
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class CampsiteControllerTest {
                 .thenReturn(20L);
 
         try {
-            mockMvc.perform(post("/campsite/reserve")
+            mockMvc.perform(post("/api/campsite/reserve")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(requestBodyJson))
                     .andExpect(status().isCreated());
@@ -89,7 +89,7 @@ public class CampsiteControllerTest {
     @Test
     public void reserveTestNegativeScenatio() {
         try {
-            mockMvc.perform(post("/campsite/reserve")
+            mockMvc.perform(post("/api/campsite/reserve")
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
         } catch (Exception e) {
@@ -106,10 +106,10 @@ public class CampsiteControllerTest {
         when(mockReservationService.update(1L, startDate, endDate)).thenReturn(true);
 
         try {
-            mockMvc.perform(put("/campsite/modify")
+            mockMvc.perform(put("/api/campsite/modify")
                     .param("id", new Long(1L).toString())
-                    .param("arrivalDate", startDate.toString())
-                    .param("departureDate", endDate.toString()))
+                    .param("startDate", startDate.toString())
+                    .param("endDate", endDate.toString()))
                     .andExpect(status().isNoContent());
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,10 +124,10 @@ public class CampsiteControllerTest {
         when(mockReservationService.update(100L, startDate, endDate)).thenReturn(false);
 
         try {
-            mockMvc.perform(put("/campsite/modify")
-                    .param("id", new Long(1L).toString())
-                    .param("arrivalDate", startDate.toString())
-                    .param("departureDate", endDate.toString()))
+            mockMvc.perform(put("/api/campsite/modify")
+                    .param("id", new Long(100L).toString())
+                    .param("startDate", startDate.toString())
+                    .param("endDate", endDate.toString()))
                     .andExpect(status().isNotFound());
         } catch (Exception e) {
             e.printStackTrace();
@@ -140,7 +140,7 @@ public class CampsiteControllerTest {
         doNothing().when(mockReservationService).remove(1L);
 
         try {
-            mockMvc.perform(delete("/campsite/remove")
+            mockMvc.perform(delete("/api/campsite/remove")
                     .param("id", new Long(1L).toString()))
                     .andExpect(status().isOk());
         } catch (Exception e) {
@@ -150,7 +150,7 @@ public class CampsiteControllerTest {
 
     public void removeBookingTestWithNullValues() {
         try {
-            mockMvc.perform(delete("/campsite/remove")
+            mockMvc.perform(delete("/api/campsite/remove")
                     .param("id", null))
                     .andExpect(status().isBadRequest());
         } catch (Exception e) {

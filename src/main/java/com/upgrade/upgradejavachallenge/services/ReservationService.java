@@ -1,6 +1,7 @@
 package com.upgrade.upgradejavachallenge.services;
 
 import com.upgrade.upgradejavachallenge.component.BookingComponent;
+import com.upgrade.upgradejavachallenge.exceptions.RecordNotFoundException;
 import com.upgrade.upgradejavachallenge.model.Reservation;
 import com.upgrade.upgradejavachallenge.util.DateRange;
 import lombok.extern.slf4j.Slf4j;
@@ -40,10 +41,10 @@ public class ReservationService {
     private final BiPredicate<LocalDateTime, LocalDateTime> maxBookingPredicate
             = (localDate1, localDate2) -> localDate1.plusMonths(bookingMaxLimitMonth).isBefore(localDate2);
 
-    private final Predicate<LocalDateTime> advBookingMaxPredicate
-            =  localDateTime1 -> localDateTime1.minusMonths(bookingMaxLimitMonth).isBefore(LocalDateTime.now());
+    private final Predicate<LocalDateTime> maxAdvancedBookingPredicate
+            = localDateTime1 -> localDateTime1.minusMonths(bookingMaxLimitMonth).isBefore(LocalDateTime.now());
 
-    private final Predicate<LocalDateTime> advBookingMinPredicate
+    private final Predicate<LocalDateTime> minAdvancedBookingPredicate
             = localDateTime1 -> localDateTime1.minusDays(bookingMinLimitDays).isAfter(LocalDateTime.now());
 
     @Autowired
@@ -81,7 +82,7 @@ public class ReservationService {
     }
 
     private Boolean advancedBookingValidations(LocalDateTime date1) {
-        return advBookingMaxPredicate.test(date1) && advBookingMinPredicate.test(date1);
+        return maxAdvancedBookingPredicate.test(date1) && minAdvancedBookingPredicate.test(date1);
     }
 
     public Optional<Reservation> find(Long id) {

@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -36,35 +35,30 @@ public class BookingComponent {
         return reservationList;
     }
 
-
     public void removeBooking(Long id) {
         reservationRepository.deleteById(id);
     }
 
-    public Reservation recordBooking(LocalDateTime startDate, LocalDateTime endDate, String name, String email) {
-        Optional<User> optionalUser = userRepository.findUserByEmail(email);
+    public Reservation recordBooking(LocalDateTime startDate, LocalDateTime endDate,
+                                     String name, String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
 
-        if (!optionalUser.isPresent()) {
-            return reservationRepository.save(new Reservation(startDate, endDate, new User(name, email)));
+        final User user;
+
+        final Reservation reservation;
+
+        if (optionalUser.isPresent()) {
+            user = optionalUser.get();
+
+            reservation = reservationRepository.save(new Reservation(startDate, endDate, user));
+
         } else {
+            user = userRepository.save(new User(name, email));
 
-            User usr = optionalUser.get();
-
-            Set<Reservation> reservationList = usr.getReservations();
-
-            reservationList.add(new Reservation(startDate, endDate, usr));
-
-            usr.setReservations(reservationList);
-
-            User savedUser = userRepository.save(usr);
-
-            Optional<Reservation> optionalReservation = savedUser.getReservations().stream()
-                    .filter(reservation -> reservation.getStartDate().equals(startDate) &&
-                            reservation.getEndDate().equals(endDate))
-                    .findFirst();
-
-            return optionalReservation.get();
+            reservation = reservationRepository.save(new Reservation(startDate, endDate, user));
         }
+
+        return reservation;
     }
 
     public Reservation recordBooking(Reservation reservation) {

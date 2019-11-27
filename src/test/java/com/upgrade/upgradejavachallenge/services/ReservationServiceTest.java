@@ -171,14 +171,19 @@ class ReservationServiceTest {
         final String userName = "Donald Duck";
         final String userEmail = "donald.duck@gmail.com";
 
-        Reservation dummyReservation = new Reservation(dateTime2, dateTime6, new User(userEmail, userEmail));
+        Reservation dummyReservation
+                = new Reservation(dateTime2, dateTime6, new User(userEmail, userEmail));
         dummyReservation.setReservationId(1L);
         when(mockBookingComponent.getAllReservations()).thenReturn(new ArrayList<>());
-        when(mockBookingComponent.recordBooking(dateTime2, dateTime6, userName, userEmail))
+        when(mockBookingComponent.recordBooking(any(LocalDateTime.class),
+                any(LocalDateTime.class), any(String.class),
+                any(String.class)))
                 .thenReturn(dummyReservation);
+
 
         Long result = serviceUnderTest
                 .reserve(dateTime2.toLocalDate(), dateTime6.toLocalDate(), userName, userEmail);
+
 
         assertTrue(result.equals(1L));
     }

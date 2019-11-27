@@ -1,7 +1,6 @@
 package com.upgrade.upgradejavachallenge.model;
 
 import lombok.*;
-import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -11,11 +10,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @EqualsAndHashCode
-@Entity(name = "reservations")
+@Entity
 public class Reservation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
+    @Column(name = "reservation_id", updatable = false, nullable = false)
     private Long reservationId;
 
     @Column(name = "start_date", nullable = false)
@@ -24,10 +23,11 @@ public class Reservation {
     @Column(name = "end_date", nullable = false)
     private LocalDateTime endDate;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    @ManyToOne
     private User user;
+
+    @Version
+    private Long version;
 
     public Reservation(LocalDateTime startDate, LocalDateTime endDate, User user) {
         this.startDate = startDate;

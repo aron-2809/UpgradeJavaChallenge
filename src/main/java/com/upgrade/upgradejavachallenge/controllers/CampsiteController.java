@@ -30,7 +30,6 @@ public class CampsiteController {
     @GetMapping("/availability")
     public ResponseEntity findAvalability(@RequestParam LocalDate startDate,
                                           @RequestParam LocalDate endDate) {
-
         List<LocalDateTime> availableDates = reservationService.findAvailability(startDate, endDate);
 
         log.info("Available dates: " + availableDates);
@@ -59,10 +58,9 @@ public class CampsiteController {
                 && addRequestDTO.getArrivalDate() != null
                 && addRequestDTO.getDepartureDate() != null) {
 
-
             Optional<Long> optionalReservationId = Optional.ofNullable(reservationService
-                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(), addRequestDTO.getName(),
-                            addRequestDTO.getEmail()));
+                    .reserve(addRequestDTO.getArrivalDate(), addRequestDTO.getDepartureDate(),
+                            addRequestDTO.getName(), addRequestDTO.getEmail()));
 
             if (optionalReservationId.isPresent()) {
                 Long reservationId = optionalReservationId.get();
@@ -87,17 +85,17 @@ public class CampsiteController {
             return new ResponseEntity(id, HttpStatus.OK);
         }
 
-        throw new RecordNotFoundException("Invalid Input values.");
+        return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
 
     @PutMapping("/modify")
     public ResponseEntity modifyReservation(@RequestParam Long id,
-                                            @RequestParam LocalDate arrivalDate,
-                                            @RequestParam LocalDate departureDate) {
+                                            @RequestParam LocalDate startDate,
+                                            @RequestParam LocalDate endDate) {
 
-        if (id != null && arrivalDate != null && departureDate != null
-                && arrivalDate.isBefore(departureDate)) {
-            if (reservationService.update(id, arrivalDate, departureDate)) {
+        if (id != null && startDate != null && endDate != null
+                && startDate.isBefore(endDate)) {
+            if (reservationService.update(id, startDate, endDate)) {
                 log.info(String.format("%s %d %s", "Reservation with id", id, "modified."));
 
                 return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -107,5 +105,4 @@ public class CampsiteController {
         }
         return new ResponseEntity(HttpStatus.BAD_REQUEST);
     }
-
 }

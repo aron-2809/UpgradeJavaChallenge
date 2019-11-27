@@ -1,8 +1,12 @@
 package com.upgrade.upgradejavachallenge.model;
 
-import lombok.*;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -11,7 +15,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
-@Entity(name = "users")
+@Entity
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,11 +24,10 @@ public class User {
     @Column(name = "name")
     private String name;
     @Column(name = "email", unique = true)
+    @Email
     private String email;
 
-    @OneToMany(cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY,
-            mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Reservation> reservations = new HashSet<>();
 
     public User(String name, String email) {
